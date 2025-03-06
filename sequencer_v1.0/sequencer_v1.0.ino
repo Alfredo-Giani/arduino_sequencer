@@ -34,6 +34,7 @@
 #define PWM_POT           A3 // A3
 #define FINE_POT          A4 // A4
 #define RATE_POT        A5 // A4
+#define TOUCH_SENSOR    A6 
 
 
 //--------------------------------------------------------------------
@@ -431,7 +432,7 @@ void readResetButton()
     // whatever the reading is at, it's been there for longer than the debounce
     // delay, so take it as the actual current state:
 
-    if (rst)
+    if (rst) // the button is definitely pressed down
     { 
       if ( state == STATE::PLAY_)
       {
@@ -453,17 +454,22 @@ void readResetButton()
           if (timeSamplerState == TIME_SAMPLER_STATE::WAIT_)
           {
               for (int i = 1; i < 9; i++)
+              {
                 digitalWrite(i, LOW);
+              }
 
               if (dir == DIRECTION::FWD_)
+              {
                 curr_chan = start_chan;
+              }
               else
+              {
                 curr_chan = stop_chan;
+              }
 
               cycle_up = false; // set cycle_down
               change_trigger = false;
               
-
               prev_timer = millis(); // initialise clock timer
               digitalWrite(curr_chan, HIGH);
 
@@ -471,7 +477,7 @@ void readResetButton()
               clickCounter = 0;
               lastClick = millis();                            
           }
-          else
+          else // if the sampler is sampling (not in wait) the each click on the sensor should reset the playhead at start_chan
           {
             if (dir == DIRECTION::FWD_)
                 curr_chan = start_chan;
@@ -486,19 +492,19 @@ void readResetButton()
           }      
           reset_pressed = true;
         }
-        else
+        else // if clock is internal and we are in idle mode (stopped) a reset input will set the state to zero
         {
           initState();
         }
       }            
     }
-    else
+    else // the button is not pressed
     { 
       if (clock_state == CLOCK_STATE::EXT_)
       {     
         if(state == STATE::IDLE_)
         {         
-          if (reset_pressed)
+          if (reset_pressed) // the button was pressed, and now is not
           {
             releaseStart = millis();
             unsigned long presd = releaseStart-pressStart;  
