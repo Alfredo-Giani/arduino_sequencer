@@ -115,7 +115,7 @@ float maxtime = 10.0;
 int max_samplings = 32;
 bool lastRst = false;
 unsigned long rst_lastDebounceTime = 0;  // the last time the output pin was toggled
-unsigned long rst_debounceDelay = 10;    // the debounce time; increase if the output 
+unsigned long rst_debounceDelay = 5;    // the debounce time; increase if the output 
 
 unsigned long lastClick = 0;
 
@@ -174,8 +174,6 @@ void initState()
   lastRst = false;
   
   lastClick = 0;
-
-
 
   start_chan = 1;
   stop_chan = 8;
@@ -480,9 +478,30 @@ void readResetButton()
           else // if the sampler is sampling (not in wait) the each click on the sensor should reset the playhead at start_chan
           {
             if (dir == DIRECTION::FWD_)
+            {
                 curr_chan = start_chan;
-              else
+            }
+            else
+            {
                 curr_chan = stop_chan;
+            }
+
+// NEW CODE ON THE PRESS
+            if (!reset_pressed) // the button wasn't pressed, and now it is
+            {
+              if (timeSamplerState = TIME_SAMPLER_STATE::SAMPLE_)
+              {
+                if (clickCounter > 1)
+                {
+                  unsigned long timediff = currtime - lastClick;         
+                
+                  cumClickDistance = ((clickCounter - 1)*cumClickDistance + timediff)/clickCounter;
+                  avg_half_period_ms = cumClickDistance/(2*stop_chan);
+                  lastClick = currtime;                   
+                }
+                clickCounter <  countBufferLength? clickCounter++ : countBufferLength;                           
+              }
+            }
           }
 
           if (!reset_pressed)
@@ -525,7 +544,7 @@ void readResetButton()
 
               timeSamplerState == TIME_SAMPLER_STATE::WAIT_;
             }
-            
+/* OLD CODE ON THE RELEASE
             if (timeSamplerState = TIME_SAMPLER_STATE::SAMPLE_)
             {
               if (clickCounter > 1)
@@ -537,8 +556,9 @@ void readResetButton()
                 lastClick = currtime;                   
               }
               clickCounter <  countBufferLength? clickCounter++ : countBufferLength;                           
-            }                  
-                                      
+            }
+*/
+
             reset_pressed = false; 
           }
           else
